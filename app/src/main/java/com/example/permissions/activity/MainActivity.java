@@ -1,7 +1,6 @@
 package com.example.permissions.activity;
 
 import android.Manifest;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -23,50 +22,34 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         requestForWriteSDCardPermission();
         requestForReceivedSMSPermissions();
     }
 
     private void requestForWriteSDCardPermission() {
         RequestHelper requestHelper = new RequestHelper(this);
-        requestHelper.request(Manifest.permission.WRITE_EXTERNAL_STORAGE, new RequestHelper.OnGrantedListener() {
-            @Override
-            public void onGranted() {
-                Toast.makeText(MainActivity.this, "Granted for write external storage", Toast.LENGTH_SHORT).show();
-                createAppDir();
-            }
-        }, new RequestHelper.OnDeniedListener() {
-            @Override
-            public void onDenied() {
-                Toast.makeText(MainActivity.this, "Denied for write external storage", Toast.LENGTH_SHORT).show();
-            }
-        });
+        requestHelper.request(Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                () -> {
+                    Toast.makeText(MainActivity.this, "Granted for write external storage", Toast.LENGTH_SHORT).show();
+                    createAppDir();
+                },
+                () -> Toast.makeText(MainActivity.this, "Denied for write external storage", Toast.LENGTH_SHORT).show());
     }
 
     private void requestForReceivedSMSPermissions() {
         RequestHelper requestHelper = new RequestHelper(this);
-        requestHelper.request(Manifest.permission.RECEIVE_SMS, new RequestHelper.OnGrantedListener() {
-            @Override
-            public void onGranted() {
-                Toast.makeText(MainActivity.this, "Granted for received sms", Toast.LENGTH_SHORT).show();
-            }
-        }, new RequestHelper.OnDeniedListener() {
-            @Override
-            public void onDenied() {
-                Toast.makeText(MainActivity.this, "Denied for received sms", Toast.LENGTH_SHORT).show();
-                new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Permission Required")
-                        .setMessage("Receiving SMS required for this app.")
-                        .setPositiveButton("Ask me again", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                requestForReceivedSMSPermissions();
-                            }
-                        })
-                        .create()
-                        .show();
-            }
-        });
+        requestHelper.request(Manifest.permission.RECEIVE_SMS,
+                () -> Toast.makeText(MainActivity.this, "Granted for received sms", Toast.LENGTH_SHORT).show(),
+                () -> {
+                    Toast.makeText(MainActivity.this, "Denied for received sms", Toast.LENGTH_SHORT).show();
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Permission Required")
+                            .setMessage("Receiving SMS required for this app.")
+                            .setPositiveButton("Ask me again", (dialog, which) -> requestForReceivedSMSPermissions())
+                            .create()
+                            .show();
+                });
     }
 
     @Override
